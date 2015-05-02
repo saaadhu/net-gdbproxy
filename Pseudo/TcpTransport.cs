@@ -30,10 +30,12 @@ namespace Pseudo
             listener = new TcpListener(p);
         }
 
+        private volatile bool stopAccepting;
+
         public void Start()
         {   
             listener.Start();
-            while (true)
+            while (!stopAccepting)
             {
                 client = listener.AcceptTcpClient();
                 RaiseClientConnected(client.GetStream());
@@ -51,6 +53,7 @@ namespace Pseudo
         {
             if (client != null)
                 client.Close();
+            stopAccepting = true;
             listener.Stop();
         }
     }

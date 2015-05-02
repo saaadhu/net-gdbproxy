@@ -29,7 +29,7 @@ namespace Pseudo
             w = new BinaryWriter(s, Encoding.ASCII);
         }
 
-        public void BeginSequence()
+        public void Start()
         {
             GdbPacket p;
             while ((p = ReadOnePacket()) != null)

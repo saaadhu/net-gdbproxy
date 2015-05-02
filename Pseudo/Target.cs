@@ -25,6 +25,8 @@ namespace Pseudo
                 return this.Continue();
         }
 
+        internal bool Killed { get; private set; }
+
         protected abstract string Continue(long addr);
         protected abstract string Continue();
 
@@ -70,21 +72,81 @@ namespace Pseudo
                 .Select(c => GetEncodedRegisterContents(c)));
         }
 
+        string WriteRegisters(IEnumerable<string> args)
+        {
+            List<uint> registerContents = new List<uint>();
+            IEnumerable<char> c = args.First();
+            while (c.Any())
+            {
+                var x = string.Join ("", c.Take(RegisterSize * 2));
+                c = c.Skip(RegisterSize * 2);
+                registerContents.Add(uint.Parse(x, System.Globalization.NumberStyles.HexNumber));
+            }
+
+            return SetAllRegisterContents(registerContents) ? "OK" : "E";
+        }
+
         string ReadRegister(IEnumerable<string> args)
         {
             var reg = uint.Parse (args.First(), System.Globalization.NumberStyles.HexNumber);
             return GetEncodedRegisterContents(GetRegisterContents(reg));
         }
 
+        string ReadMemory(IEnumerable<string> args)
+        {
+            IEnumerable<byte> contents = GetMemoryContents(uint.Parse(args.First()), uint.Parse(args.ElementAt(1)));
+            var builder = new StringBuilder();
+
+            foreach (var b in contents)
+                builder.Append(b.ToString("X2"));
+
+            return builder.ToString();
+        }
+
+        string WriteMemory(IEnumerable<string> args)
+        {
+            List<byte> contents = new List<byte>();
+
+            var addr = uint.Parse(args.ElementAt(0), System.Globalization.NumberStyles.HexNumber);
+            var length = uint.Parse(args.ElementAt(1), System.Globalization.NumberStyles.HexNumber);
+            var c = args.ElementAt(2);
+            
+            for (int i = 0; i<c.Length; i += 2)
+            {
+                var x = c[i].ToString() + c[i + 1].ToString();
+                contents.Add(byte.Parse(x, System.Globalization.NumberStyles.HexNumber));
+            }
+
+            return SetMemoryContents(addr, length, contents) ? "OK" : "E";
+        }
+
         protected abstract IEnumerable<uint> GetAllRegisterContents();
+        protected abstract bool SetAllRegisterContents(IEnumerable<uint> contents);
+        
         protected abstract uint GetRegisterContents(uint reg);
+
+        protected abstract IEnumerable<byte> GetMemoryContents(uint addr, uint length);
+        protected abstract bool SetMemoryContents(uint addr, uint length, IEnumerable<byte> contents);
+
+        string Kill(IEnumerable<string> args)
+        {
+            Kill();
+            Killed = true;
+            return "";
+        }
+
+        protected abstract void Kill();
         
         private void RegisterKnownCommands()
         {
             commands.Register("p", this.ReadRegister);
             commands.Register("g", this.ReadRegisters);
+            commands.Register("G", this.WriteRegisters);
             commands.Register("?", this.ReportState);
             commands.Register("c", this.Continue);
+            commands.Register("m", this.ReadMemory);
+            commands.Register("M", this.WriteMemory);
+            commands.Register("k", this.Kill);
         }
 
         protected internal virtual bool ExecuteCommand(string command, out string response)

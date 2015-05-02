@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Net;
+using System.IO;
 
 namespace Pseudo
 {
@@ -27,7 +28,16 @@ namespace Pseudo
         {
             var p = new GdbRSProtocol(e.Stream);
             p.CommandReceived += new EventHandler<CommandReceivedEventArgs>(p_CommandReceived);
-            p.BeginSequence();
+
+            try
+            {
+                p.Start();
+            }
+            catch (Exception)
+            {
+                if (!target.Killed)
+                    throw;
+            }
         }
 
         void p_CommandReceived(object sender, CommandReceivedEventArgs e)
@@ -38,6 +48,13 @@ namespace Pseudo
             if (!target.ExecuteCommand (e.Command, out response))
             {
                 p.SendPacket("");
+                return;
+            }
+
+            if (target.Killed)
+            {
+                transport.Stop();
+                transport.ClientConnected -= transport_ClientConnected;
                 return;
             }
 

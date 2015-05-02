@@ -23,12 +23,31 @@ namespace Pseudo.TestConsole
 
         protected override IEnumerable<uint> GetAllRegisterContents()
         {
-            return Enumerable.Repeat((uint)0, 36);
+            return Enumerable.Repeat((uint)0, 38);
+        }
+
+        protected override bool SetAllRegisterContents(IEnumerable<uint> contents)
+        {
+            return true;
         }
 
         protected override uint GetRegisterContents(uint reg)
         {
             return 0;
+        }
+
+        protected override IEnumerable<byte> GetMemoryContents(uint addr, uint length)
+        {
+            return new byte[] { 0xCA, 0xFE, 0xBA, 0xBE };
+        }
+
+        protected override bool SetMemoryContents(uint addr, uint length, IEnumerable<byte> contents)
+        {
+            return true;
+        }
+
+        protected override void Kill()
+        {
         }
     }
 
