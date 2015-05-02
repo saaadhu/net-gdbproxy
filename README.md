@@ -10,7 +10,7 @@ To use Pseudo, derive your own class from Pseudo.Target, and
 implement the abstract methods. Then do
 
 	var t = new TestTarget();
-        var proxy = new Pseudo.Proxy(t);
-        proxy.Listen(new System.Net.IPEndPoint(System.Net.IPAddress.Any, 5565));
+	var proxy = new Pseudo.Proxy(t);
+	proxy.Listen(new System.Net.IPEndPoint(System.Net.IPAddress.Any, 5565));
 
 And that's it.
