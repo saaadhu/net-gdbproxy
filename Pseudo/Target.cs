@@ -9,11 +9,11 @@ namespace Pseudo
     {
         CommandActionMap commands = new CommandActionMap();
 
-        public int RegisterSize { get; private set; }
+        public IEnumerable<int> RegisterSizes { get; private set; }
 
-        public Target(int registerSize)
+        public Target(IEnumerable<int> registerSizes)
         {
-            RegisterSize = registerSize;
+            RegisterSizes = registerSizes;
             RegisterKnownCommands();
         }
 
@@ -57,9 +57,14 @@ namespace Pseudo
             // TODO: Handle watchpoint
         }
 
-        private string GetEncodedRegisterContents(uint input)
+        private string GetEncodedRegisterContents(uint input, int regno)
         {
-            var s = input.ToString("X" + RegisterSize.ToString());
+            return GetEncodedRegisterContentsForSize(input, RegisterSizes.ElementAt(regno));
+        }
+
+        private string GetEncodedRegisterContentsForSize(uint input, int size)
+        {
+            var s = input.ToString("X" + size.ToString());
             if (s.Length % 2 == 0)
                 return s;
             return "0" + s;
@@ -67,19 +72,22 @@ namespace Pseudo
 
         string ReadRegisters(IEnumerable<string> args)
         {
-            return string.Join("",
-                GetAllRegisterContents()
-                .Select(c => GetEncodedRegisterContents(c)));
+            var c = GetAllRegisterContents();
+            var formattedRegs =
+               c.Select((regc, i) => GetEncodedRegisterContents(regc, i));
+            return string.Join("", formattedRegs);
         }
 
         string WriteRegisters(IEnumerable<string> args)
         {
             List<uint> registerContents = new List<uint>();
-            IEnumerable<char> c = args.First();
-            while (c.Any())
+            string c = new string(args.First().ToArray());
+
+            int i = 0;
+            foreach(var regSize in RegisterSizes)
             {
-                var x = string.Join ("", c.Take(RegisterSize * 2));
-                c = c.Skip(RegisterSize * 2);
+                var x = c.Substring(i, regSize * 2);
+                i += regSize * 2;
                 registerContents.Add(uint.Parse(x, System.Globalization.NumberStyles.HexNumber));
             }
 
@@ -89,7 +97,7 @@ namespace Pseudo
         string ReadRegister(IEnumerable<string> args)
         {
             var reg = uint.Parse (args.First(), System.Globalization.NumberStyles.HexNumber);
-            return GetEncodedRegisterContents(GetRegisterContents(reg));
+            return GetEncodedRegisterContents(GetRegisterContents(reg), (int)reg);
         }
 
         string ReadMemory(IEnumerable<string> args)

@@ -8,7 +8,8 @@ namespace Pseudo.TestConsole
     class TestTarget : Target
     {
         public TestTarget()
-            : base(1)
+            : /* AVR base(Enumerable.Concat(Enumerable.Repeat(1, 33), Enumerable.Repeat(2, 1)).Concat(Enumerable.Repeat(4, 1))) */
+            base(Enumerable.Repeat(4, 26))
         {
         }
         protected override string Continue(long addr)
@@ -23,7 +24,7 @@ namespace Pseudo.TestConsole
 
         protected override IEnumerable<uint> GetAllRegisterContents()
         {
-            return Enumerable.Repeat((uint)0, 38);
+            return Enumerable.Repeat((uint)0, 26);
         }
 
         protected override bool SetAllRegisterContents(IEnumerable<uint> contents)
